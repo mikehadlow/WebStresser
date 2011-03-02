@@ -18,3 +18,4 @@ Options
   -a, --accept=VALUE         Accept header value, default is 'text/xml'
   -c, --contenttype=VALUE    ContentType header value, default is 'text/xml;charset="utf-8"'
   -z, --timeout=VALUE        Timeout in milliseconds, default is 10000
+  -H[=VALUE1:VALUE2]         Add a header to the request. e.g: -HMyHeader=MyValue
