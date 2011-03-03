@@ -56,7 +56,7 @@ namespace WebStresser
             outputWriter.WriteLine("Calls per second {0}", (completed * 1000) / stopwatch.ElapsedMilliseconds);
             if (elapsed.Count > 0)
             {
-                outputWriter.WriteLine("Avergate call duration ms {0:#,###}", elapsed.Average());
+                outputWriter.WriteLine("Average call duration ms {0:#,###}", elapsed.Average());
             }
         }
 
