@@ -13,10 +13,8 @@ namespace WebStresser
         private readonly TextWriter outputWriter;
 
         private int completed = 0;
-        private readonly object completedLock = new object();
 
         private int faulted = 0;
-        private readonly object faultedLock = new object();
 
         private readonly List<long> elapsed = new List<long>();
         private readonly object elapsedLock = new object();
@@ -43,7 +41,7 @@ namespace WebStresser
             ThreadPool.QueueUserWorkItem(ExecuteRequests);
 
             Thread.Sleep(1000);
-            while (completed < configuration.Iterations)
+            while (Thread.VolatileRead(ref completed) < configuration.Iterations)
             {
                 outputWriter.WriteLine("Completed: {0:#,##0} \tFaulted: {1:#,##0} \tConnections: {2}", 
                     completed, faulted, servicePoint.CurrentConnections);
@@ -125,21 +123,16 @@ namespace WebStresser
                 }
                 catch (WebException webException)
                 {
-                    lock (faultedLock)
-                    {
-                        faulted++;
-                    }
-                    if (!webException.Message.StartsWith("The underlying connection was closed"))
+					Interlocked.Increment(ref faulted);
+
+					if (!webException.Message.StartsWith("The underlying connection was closed"))
                     {
                         ConsumeResponse(webException.Response);
                     }
                 }
                 finally
                 {
-                    lock (completedLock)
-                    {
-                        completed++;
-                    }
+                	Interlocked.Increment(ref completed);
                 }
             }, null);
         }
