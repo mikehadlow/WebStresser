@@ -13,8 +13,10 @@ namespace WebStresser
         private readonly TextWriter outputWriter;
 
         private int completed = 0;
-
         private int faulted = 0;
+
+        private readonly object applicationFaulLock = new object();
+        private bool applicationFault = false;
 
         private readonly List<long> elapsed = new List<long>();
         private readonly object elapsedLock = new object();
@@ -32,6 +34,9 @@ namespace WebStresser
             ServicePointManager.UseNagleAlgorithm = false;
 
             var servicePoint = ServicePointManager.FindServicePoint(configuration.ServiceUri);
+
+            // allow as many connections as the number of iterations
+            // http://social.msdn.microsoft.com/Forums/en/ncl/thread/94ae61ec-08df-430b-a5d2-bb287a3acef0
             servicePoint.ConnectionLimit = configuration.Iterations;
 
             outputWriter.WriteLine("Starting test...");
@@ -40,13 +45,7 @@ namespace WebStresser
 
             ThreadPool.QueueUserWorkItem(ExecuteRequests);
 
-            Thread.Sleep(1000);
-            while (Thread.VolatileRead(ref completed) < configuration.Iterations)
-            {
-                outputWriter.WriteLine("Completed: {0:#,##0} \tFaulted: {1:#,##0} \tConnections: {2}", 
-                    completed, faulted, servicePoint.CurrentConnections);
-                Thread.Sleep(1000);    
-            }
+            WaitUntilAllCallsAreComplete(servicePoint);
 
             stopwatch.Stop();
 
@@ -60,12 +59,42 @@ namespace WebStresser
             }
         }
 
+        private void WaitUntilAllCallsAreComplete(ServicePoint servicePoint) {
+            Thread.Sleep(10);
+            var waitCount = 0;
+            while (Thread.VolatileRead(ref completed) < configuration.Iterations && !applicationFault)
+            {
+                if(waitCount == 9)
+                {
+                    outputWriter.WriteLine("Completed: {0:#,##0} \tFaulted: {1:#,##0} \tConnections: {2}",
+                                           completed, faulted, servicePoint.CurrentConnections);
+                    waitCount = 0;
+                }
+                else
+                {
+                    waitCount++;
+                }
+                Thread.Sleep(10);    
+            }
+        }
+
         private void ExecuteRequests(object state)
         {
-            for (var i = 0; i < configuration.Iterations; i++)
+            try
             {
-                ExecuteRequest();
-                Thread.Sleep(configuration.IntervalMilliseconds);
+                for (var i = 0; i < configuration.Iterations; i++)
+                {
+                    ExecuteRequest();
+                    Thread.Sleep(configuration.IntervalMilliseconds);
+                }
+            }
+            catch (Exception)
+            {
+                lock (applicationFaulLock)
+                {
+                    applicationFault = true;
+                }
+                throw;
             }
         }
 
@@ -85,10 +114,6 @@ namespace WebStresser
             webRequest.Timeout = configuration.TimeoutMilliseconds;
             webRequest.KeepAlive = configuration.KeepAlive;
 
-            // allow as many connections as the number of iterations
-            // http://social.msdn.microsoft.com/Forums/en/ncl/thread/94ae61ec-08df-430b-a5d2-bb287a3acef0
-            // webRequest.ServicePoint.ConnectionLimit = iterations;
-
             var stopwatch = new System.Diagnostics.Stopwatch();
             stopwatch.Start();
 
@@ -96,45 +121,46 @@ namespace WebStresser
             {
                 // both GetRequestStream _and_ GetResponse must be aysnc, or both will be
                 // called syncronously.
-                webRequest.BeginGetRequestStream(asyncResult =>
+                webRequest.BeginGetRequestStream(getRequestStreamAsyncResponse =>
                 {
-                    using (var stream = webRequest.EndGetRequestStream(asyncResult))
+                    using (var stream = webRequest.EndGetRequestStream(getRequestStreamAsyncResponse))
                     using (var writer = new StreamWriter(stream))
                     {
                         writer.Write(configuration.PostData);
                     }
+
+                    webRequest.BeginGetResponse(getResponseAsyncResult =>
+                    {
+                        try
+                        {
+                            using (var response = webRequest.EndGetResponse(getResponseAsyncResult))
+                            {
+                                ConsumeResponse(response);
+
+                                stopwatch.Stop();
+                                lock (elapsedLock)
+                                {
+                                    elapsed.Add(stopwatch.ElapsedMilliseconds);
+                                }
+                            }
+                        }
+                        catch (WebException webException)
+                        {
+                            Interlocked.Increment(ref faulted);
+
+                            if (!webException.Message.StartsWith("The underlying connection was closed"))
+                            {
+                                ConsumeResponse(webException.Response);
+                            }
+                        }
+                        finally
+                        {
+                            Interlocked.Increment(ref completed);
+                        }
+                    }, null);
+
                 }, null);
             }
-
-            webRequest.BeginGetResponse(asyncResult =>
-            {
-                try
-                {
-                    using (var response = webRequest.EndGetResponse(asyncResult))
-                    {
-                        ConsumeResponse(response);
-
-                        stopwatch.Stop();
-                        lock(elapsedLock)
-                        {
-                            elapsed.Add(stopwatch.ElapsedMilliseconds);
-                        }
-                    }
-                }
-                catch (WebException webException)
-                {
-					Interlocked.Increment(ref faulted);
-
-					if (!webException.Message.StartsWith("The underlying connection was closed"))
-                    {
-                        ConsumeResponse(webException.Response);
-                    }
-                }
-                finally
-                {
-                	Interlocked.Increment(ref completed);
-                }
-            }, null);
         }
 
         public void ConsumeResponse(WebResponse response)
