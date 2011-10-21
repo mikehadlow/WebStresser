@@ -29,9 +29,8 @@ namespace WebStresser
 
         public void MakeRawHttpCall()
         {
-            // http://computercabal.blogspot.com/2007/09/httpwebrequest-in-c-for-web-traffic.html
-            ServicePointManager.Expect100Continue = false;
-            ServicePointManager.UseNagleAlgorithm = false;
+            ServicePointManager.Expect100Continue = configuration.Expect100Continue;
+            ServicePointManager.UseNagleAlgorithm = configuration.UseNagleAlgorithm;
 
             var servicePoint = ServicePointManager.FindServicePoint(configuration.ServiceUri);
 

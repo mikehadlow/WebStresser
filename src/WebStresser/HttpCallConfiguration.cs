@@ -31,6 +31,9 @@ namespace WebStresser
             get { return Enum.GetName(typeof (HttpMethod), Method); }
         }
 
+        public bool Expect100Continue { get; set; }
+        public bool UseNagleAlgorithm { get; set; }
+
         public HttpCallConfiguration()
         {
             Method = HttpMethod.GET;
@@ -43,6 +46,10 @@ namespace WebStresser
             Accept = "text/xml";
             ContentType = "text/xml;charset=\"utf-8\"";
             TimeoutMilliseconds = 10000;
+
+            // http://computercabal.blogspot.com/2007/09/httpwebrequest-in-c-for-web-traffic.html
+            Expect100Continue = false;
+            UseNagleAlgorithm = false;
         }
 
         public bool IsValid()
