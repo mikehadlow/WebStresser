@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebStresser.Tests", "WebStr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestTimerService", "TestTimerService\TestTimerService.csproj", "{3059387A-B33C-49B0-9526-B2A5D0A36B01}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHttpHandler", "TestHttpHandler\TestHttpHandler.csproj", "{144EF33E-90D5-41DB-83DC-F9D1B7B62876}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,16 @@ Global
 		{3059387A-B33C-49B0-9526-B2A5D0A36B01}.Release|Mixed Platforms.Build.0 = Release|x86
 		{3059387A-B33C-49B0-9526-B2A5D0A36B01}.Release|x86.ActiveCfg = Release|x86
 		{3059387A-B33C-49B0-9526-B2A5D0A36B01}.Release|x86.Build.0 = Release|x86
+		{144EF33E-90D5-41DB-83DC-F9D1B7B62876}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{144EF33E-90D5-41DB-83DC-F9D1B7B62876}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{144EF33E-90D5-41DB-83DC-F9D1B7B62876}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{144EF33E-90D5-41DB-83DC-F9D1B7B62876}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{144EF33E-90D5-41DB-83DC-F9D1B7B62876}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{144EF33E-90D5-41DB-83DC-F9D1B7B62876}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{144EF33E-90D5-41DB-83DC-F9D1B7B62876}.Release|Any CPU.Build.0 = Release|Any CPU
+		{144EF33E-90D5-41DB-83DC-F9D1B7B62876}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{144EF33E-90D5-41DB-83DC-F9D1B7B62876}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{144EF33E-90D5-41DB-83DC-F9D1B7B62876}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

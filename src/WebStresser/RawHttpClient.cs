@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
@@ -113,13 +114,11 @@ namespace WebStresser
             webRequest.Timeout = configuration.TimeoutMilliseconds;
             webRequest.KeepAlive = configuration.KeepAlive;
 
-            var stopwatch = new System.Diagnostics.Stopwatch();
+            var stopwatch = new Stopwatch();
             stopwatch.Start();
 
             if (configuration.Method == HttpMethod.POST || configuration.Method == HttpMethod.PUT)
             {
-                // both GetRequestStream _and_ GetResponse must be aysnc, or both will be
-                // called syncronously.
                 webRequest.BeginGetRequestStream(getRequestStreamAsyncResponse =>
                 {
                     using (var stream = webRequest.EndGetRequestStream(getRequestStreamAsyncResponse))
@@ -128,38 +127,46 @@ namespace WebStresser
                         writer.Write(configuration.PostData);
                     }
 
-                    webRequest.BeginGetResponse(getResponseAsyncResult =>
-                    {
-                        try
-                        {
-                            using (var response = webRequest.EndGetResponse(getResponseAsyncResult))
-                            {
-                                ConsumeResponse(response);
-
-                                stopwatch.Stop();
-                                lock (elapsedLock)
-                                {
-                                    elapsed.Add(stopwatch.ElapsedMilliseconds);
-                                }
-                            }
-                        }
-                        catch (WebException webException)
-                        {
-                            Interlocked.Increment(ref faulted);
-
-                            if (!webException.Message.StartsWith("The underlying connection was closed"))
-                            {
-                                ConsumeResponse(webException.Response);
-                            }
-                        }
-                        finally
-                        {
-                            Interlocked.Increment(ref completed);
-                        }
-                    }, null);
-
+                    GetResponse(stopwatch, webRequest);
                 }, null);
             }
+            else
+            {
+                GetResponse(stopwatch, webRequest);
+            }
+        }
+
+        private void GetResponse(Stopwatch stopwatch, HttpWebRequest webRequest)
+        {
+            webRequest.BeginGetResponse(getResponseAsyncResult =>
+            {
+                try
+                {
+                    using (var response = webRequest.EndGetResponse(getResponseAsyncResult))
+                    {
+                        ConsumeResponse(response);
+
+                        stopwatch.Stop();
+                        lock (elapsedLock)
+                        {
+                            elapsed.Add(stopwatch.ElapsedMilliseconds);
+                        }
+                    }
+                }
+                catch (WebException webException)
+                {
+                    Interlocked.Increment(ref faulted);
+
+                    if (!webException.Message.StartsWith("The underlying connection was closed"))
+                    {
+                        ConsumeResponse(webException.Response);
+                    }
+                }
+                finally
+                {
+                    Interlocked.Increment(ref completed);
+                }
+            }, null);
         }
 
         public void ConsumeResponse(WebResponse response)
