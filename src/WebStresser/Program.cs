@@ -44,6 +44,8 @@ namespace WebStresser
                     builder.GetServiceUri)
                 .Add("m=|method=", "The HTTP method. Default is GET",
                     builder.GetHttpMethod)
+                .Add("q=|querystring=", "The data to be passed. Default is empty",
+                    option => configuration.QueryString = option ?? string.Empty)
                 .Add("i=|iterations=", "Number of iterations to run, default is 1",
                     builder.GetIterations)
                 .Add("t=|interval=", "Iterval between each call in milliseconds, default is 10000",
@@ -62,7 +64,6 @@ namespace WebStresser
                     builder.GetTimeout)
                 .Add("H:", "Add a header to the request. e.g: -H MyHeader=MyValue",
                     builder.AddHeader);
-
         }
 
         private static void SetShowHelp(string option)

@@ -33,6 +33,7 @@ namespace WebStresser
 
         public bool Expect100Continue { get; set; }
         public bool UseNagleAlgorithm { get; set; }
+        public string QueryString { get; set; }
 
         public HttpCallConfiguration()
         {
