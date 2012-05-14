@@ -10,6 +10,7 @@ Options
   -?, -h, --help
   -u, --uri=VALUE            REQUIRED: The URI you want to call
   -m, --method=VALUE         The HTTP method. Default is GET
+  -q, --querystring=VALUE    The data to be passed. Default is empty
   -i, --iterations=VALUE     Number of iterations to run, default is 1
   -t, --interval=VALUE       Iterval between each call in milliseconds, default is 10000
   -p, --postdata=VALUE       Path to file containing post data
