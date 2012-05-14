@@ -1,8 +1,8 @@
 using System;
-using System.Diagnostics;
-using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading;
 
@@ -98,9 +98,10 @@ namespace WebStresser
             }
         }
 
-        private void ExecuteRequest() {
-
-            var webRequest = (HttpWebRequest)WebRequest.CreateDefault(configuration.ServiceUri);
+        private void ExecuteRequest()
+        {
+            var requestUri = new Uri(configuration.ServiceUri + configuration.QueryString);
+            var webRequest = (HttpWebRequest)WebRequest.CreateDefault(requestUri);
 
             foreach (var headerKey in configuration.Headers.Keys)
             {
